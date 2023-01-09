@@ -11,6 +11,9 @@ class Friend:
         self.check_box_value = 0 # 1 = onvalue, 0 = offvalue
         self.disable_font_color = "light grey"
         self.active_font_color = "black"
+        self.group_label = "group_" + name
+        self.group_value = ""
+        self.group_diff = 0
 
     def increase_expense(self, amount):
         print(self.expense + amount, self.name)
@@ -19,10 +22,3 @@ class Friend:
     def reset(self):
         self.expense = 0
 
-
-
-
-
-# namelist = ["Kelvin", "Handi", "J", "Ivy", "Michelle", "Terry", "Kenny", "Allen", "Grace"]
-# friendList = createFriendList(namelist, row=4, col=4)
-#grid number must be larger than namelist
