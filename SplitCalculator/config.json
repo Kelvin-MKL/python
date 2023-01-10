@@ -1,9 +1,1 @@
-{
-  "namelist" : {"listA": ["Kelvin", "Handi", "Ivy", "J", "Terry", "Michelle", "Kenny", "Allen", "Grace"],
-            "listB":  ["bb"],
-            "listC" : ["OJ", "BJ"]
-  },
-  "row" : 3,
-  "col" : 3
-    }
-
+{"namelist": {"listA": ["Kelvin", "Handi", "Ivy", "J", "Terry", "Michelle", "Kenny", "Allen", "Grace"], "listB": ["bb", "cc", "dd", "ee"], "listC": ["OJ", "BJ"]}, "row": 3, "col": 3, "on_use": "listB"}

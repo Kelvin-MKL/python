@@ -1,10 +1,10 @@
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
+from tkinter import filedialog, messagebox
 from friends import *
 from setting import *
 import json
 from screenshot import *
-
+import os
 
 class App:
     def __init__(self, friend, config_file, sh_component):
@@ -35,15 +35,16 @@ class App:
             self.row = self.json_data["row"]
             self.col = self.json_data["col"]
         print("json data imported successfully.")
-        print(self.json_data["namelist"], self.row, self.col)
+        print(self.json_data["namelist"], self.row, self.col, self.json_data, self.json_data['on_use'])
 
     def create_friend_list_obj(self):
         initial_expense = 0
         i = 0
+        l = self.json_data['on_use']
         try:
             for r in range(self.row):
                 for c in range(self.col):
-                    self.friend_list.append(Friend(self.json_data["namelist"]["listA"][i], initial_expense, r, c))
+                    self.friend_list.append(Friend(self.json_data["namelist"][l][i], initial_expense, r, c))
                     i += 1
         except IndexError:
             print("It is ok, name list is not long enough to match with row & col")
@@ -86,13 +87,37 @@ class App:
         self.total_expense_label.grid(row=fl[-1].row + 1, column=1, pady=10, padx=5, sticky="w")
         self.number_of_people_sharing_label.grid(row=fl[-1].row + 1, column=1, sticky="e", pady=10, padx=5)
         button_reset_all = tk.Button(self.frame, text="Reset All", bd=1,
-                                     command=lambda i=len(fl): [[fl[x].reset() for x in range(i)],
-                                        [self.update_ui(update_cmd="update_all", index=j) for j in range(i)]])
+                                     command=self.restart)
+                                     #lambda i=len(fl): [
+                                       # [self.update_ui(update_cmd="update_all", index=j) for j in range(i)]])
         button_reset_all.grid(row=fl[-1].row + 1, column=2, pady=10, padx=5, sticky="")
         button_finalise = tk.Button(self.frame, text="Finalise", bd=1, command=self.finalise)
         button_finalise.grid(row=fl[-1].row + 1, column=2, pady=10, padx=5, sticky="w")
         button_setting = tk.Button(self.frame, text="Setting", bd=1, command=self.open_setting_window)
         button_setting.grid(row=fl[-1].row + 1, column=2, sticky="e", padx=10)
+
+
+    def restart(self):
+
+        for i in self.frame.winfo_children():
+            i.destroy()
+
+        self.window.destroy()
+        self.window = tk.Tk()
+        self.json_data = None
+        self.friend_list = []
+        self.load_json_file()
+        self.create_friend_list_obj()
+        self.frame = tk.Frame(self.window)
+
+        self.expense_label = tk.Label(self.frame, text="$")
+        self.expense_entry = tk.Entry(self.frame)
+        self.total_expense_label = tk.Label(self.frame, text="Expense $0.0")
+        self.number_of_people_sharing_label = tk.Label(self.frame, text="People sharing 0")
+        self.create_form()
+        self.frame.pack()
+        print("aa")
+
 
     def finalise(self):
         try:
@@ -229,6 +254,9 @@ class App:
     def open_setting_window(self):
         sw = Setting(self.config_file)
         sw.show_ui()
+        a = sw.send_wid()
+        print(a)
+
 
 
     def get_combobox_value(self):
