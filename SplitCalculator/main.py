@@ -1,14 +1,13 @@
 import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox
+from tkinter import ttk, filedialog, messagebox
 from friends import *
+from setting import *
 import json
-from win32gui import GetWindowRect
-from PIL import ImageGrab
+from screenshot import *
 
 
 class App:
-    def __init__(self, friend, config_file):
+    def __init__(self, friend, config_file, sh_component):
         self.window = tk.Tk()
         self.window.title("Easy Split")
         self.wid = ""
@@ -28,6 +27,7 @@ class App:
         self.combobox_value = ["a", "b", "c", "d", "e", "f"]
         self.group_expense_dict = {}
         self.average = 0
+        self.sh_component = sh_component
 
     def load_json_file(self):
         with open(self.config_file) as f:
@@ -35,7 +35,7 @@ class App:
             self.row = self.json_data["row"]
             self.col = self.json_data["col"]
         print("json data imported successfully.")
-        print(self.json_data["name"], self.row, self.col)
+        print(self.json_data["namelist"], self.row, self.col)
 
     def create_friend_list_obj(self):
         initial_expense = 0
@@ -43,7 +43,7 @@ class App:
         try:
             for r in range(self.row):
                 for c in range(self.col):
-                    self.friend_list.append(Friend(self.json_data["name"][i], initial_expense, r, c))
+                    self.friend_list.append(Friend(self.json_data["namelist"]["listA"][i], initial_expense, r, c))
                     i += 1
         except IndexError:
             print("It is ok, name list is not long enough to match with row & col")
@@ -91,7 +91,7 @@ class App:
         button_reset_all.grid(row=fl[-1].row + 1, column=2, pady=10, padx=5, sticky="")
         button_finalise = tk.Button(self.frame, text="Finalise", bd=1, command=self.finalise)
         button_finalise.grid(row=fl[-1].row + 1, column=2, pady=10, padx=5, sticky="w")
-        button_setting = tk.Button(self.frame, text="Setting", bd=1)
+        button_setting = tk.Button(self.frame, text="Setting", bd=1, command=self.open_setting_window)
         button_setting.grid(row=fl[-1].row + 1, column=2, sticky="e", padx=10)
 
     def finalise(self):
@@ -116,7 +116,7 @@ class App:
         average_title_label.grid(row=0, column=3, sticky="e")
         credit_or_liability_label = tk.Label(new_window, text=" + / - ", font='Helvetica 13 underline')
         credit_or_liability_label.grid(row=0, column=4, sticky="e")
-        btn_save = tk.Button(new_window, text="Save file", command=self.save_file)
+        btn_save = tk.Button(new_window, text="Save file", command=self.save_file, bd=1)
         btn_save.grid(row=0, column=6, sticky="e", padx=10, pady=5, columnspan=3)
 
         row, col, p = 1, 0, 0
@@ -161,10 +161,17 @@ class App:
         print("Total expenditure: " + str(total))
 
     def save_file(self):
-        canvas = GetWindowRect(self.wid)
-        ig = ImageGrab.grab(canvas)
-        ig.save("result", format='png')
-        print(self.wid)
+        # self.wid will be set when finalise button is pressed.
+        self.window.withdraw()
+        file_path = filedialog.askdirectory(title="Where do you want to save the file?")
+        if not file_path:
+            self.window.iconify()
+            print("Nothing has be saved.")
+        else:
+            new_screenshot = self.sh_component(self.wid, file_path)
+            new_screenshot.save()
+            self.window.iconify()
+            print("Result has been saved to " + file_path)
 
     def toggle_check_box(self, index):
         fl = self.friend_list
@@ -219,6 +226,11 @@ class App:
         except ValueError:
             tk.messagebox.showwarning(title=None, message="Insert numeric value only.")
 
+    def open_setting_window(self):
+        sw = Setting(self.config_file)
+        sw.show_ui()
+
+
     def get_combobox_value(self):
         self.group_expense_dict = {}
         d = self.group_expense_dict
@@ -238,11 +250,9 @@ class App:
                     d[extra] = (i.name, round(float(i.expense - self.average), 1))
                     extra += "i"
 
-        print(d)
-
 
 if __name__ == '__main__':
-    new_app = App(Friend, 'config.json')
+    new_app = App(Friend, 'config.json', Screenshot)
     new_app.load_json_file()
     new_app.create_friend_list_obj()
     new_app.create_form()
