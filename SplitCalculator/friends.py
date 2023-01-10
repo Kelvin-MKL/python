@@ -16,9 +16,11 @@ class Friend:
         self.group_diff = 0
 
     def increase_expense(self, amount):
-        print(self.expense + amount, self.name)
-        self.expense += amount
+        try:
+            self.expense += float(amount)
+        except ValueError:
+            print("value is not numeric type.")
 
     def reset(self):
-        self.expense = 0
+        self.expense = 0.0
 

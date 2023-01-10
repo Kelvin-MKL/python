@@ -1,15 +1,17 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 from friends import *
 import json
 from win32gui import GetWindowRect
-
+from PIL import ImageGrab
 
 
 class App:
     def __init__(self, friend, config_file):
         self.window = tk.Tk()
         self.window.title("Easy Split")
+        self.wid = ""
         self.frame = tk.Frame(self.window)
         self.frame.pack()
         self.friend = friend  # Friend class
@@ -20,7 +22,7 @@ class App:
         self.col = None  # will be set according to config file -> grid col
         self.expense_label = tk.Label(self.frame, text="$")
         self.expense_entry = tk.Entry(self.frame)
-        self.total_expense_label = tk.Label(self.frame, text="Total expense $0")
+        self.total_expense_label = tk.Label(self.frame, text="Expense $0.0")
         self.number_of_people_sharing_label = tk.Label(self.frame, text="People sharing 0")
         self.number_of_people_participated = 0
         self.combobox_value = ["a", "b", "c", "d", "e", "f"]
@@ -46,8 +48,6 @@ class App:
         except IndexError:
             print("It is ok, name list is not long enough to match with row & col")
         print("Friend list object created successfully.")
-        # for h in self.friend_list:
-        #     print(h.name, h.row, h.col)
 
     def create_form(self):
         fl = self.friend_list
@@ -56,15 +56,15 @@ class App:
             fl[index].outter_label = tk.LabelFrame(self.frame, text=fl[index].name, fg=font_color)
             fl[index].outter_label.grid(row=fl[index].row, column=fl[index].col, padx=20, pady=20)
             fl[index].inner_label = tk.Label(fl[index].outter_label, text="Current expense $" + str(fl[index].expense),
-                                             fg=font_color)
+                                             fg=font_color, width=18)
             fl[index].inner_label.grid(row=0, column=0, padx=20)
-            fl[index].btn_add_label = tk.Button(fl[index].outter_label, text="Add", fg=font_color,
-                                                command=lambda i=index: [fl[i].increase_expense(
-                                                    float(self.expense_entry.get())),
+            fl[index].btn_add_label = tk.Button(fl[index].outter_label, text="Add", bd=1, fg=font_color,
+                                                command=lambda i=index: [self.check_input(self.expense_entry.get()),
+                                                    fl[i].increase_expense(self.expense_entry.get()),
                                                     self.update_ui(update_cmd="expense_label", index=i),
                                                     self.total_expense_cal()])
             fl[index].btn_add_label.grid(row=1, column=0, padx=10, pady=5, sticky="w")
-            fl[index].btn_reset_label = tk.Button(fl[index].outter_label, text="Reset", fg=font_color,
+            fl[index].btn_reset_label = tk.Button(fl[index].outter_label, text="Reset", bd=1, fg=font_color,
                                                   command=lambda i=index: [fl[i].reset(),
                                                                            self.update_ui(update_cmd="expense_label",
                                                                                           index=i)])
@@ -83,22 +83,30 @@ class App:
         self.expense_label.grid(row=fl[-1].row + 1, column=0, sticky="w", padx=15, pady=10)
         self.expense_entry.grid(row=fl[-1].row + 1, column=0, padx=10, pady=10)
         self.expense_entry.select_range(0, 5)
-        button_reset_all = tk.Button(self.frame, text="Reset All",
+        self.total_expense_label.grid(row=fl[-1].row + 1, column=1, pady=10, padx=5, sticky="w")
+        self.number_of_people_sharing_label.grid(row=fl[-1].row + 1, column=1, sticky="e", pady=10, padx=5)
+        button_reset_all = tk.Button(self.frame, text="Reset All", bd=1,
                                      command=lambda i=len(fl): [[fl[x].reset() for x in range(i)],
                                         [self.update_ui(update_cmd="update_all", index=j) for j in range(i)]])
-        button_reset_all.grid(row=fl[-1].row + 1, column=3, pady=10, padx=5, sticky="w")
-        button_finalise = tk.Button(self.frame, text="Finalise", command=self.finalise)
-        button_finalise.grid(row=fl[-1].row + 1, column=2, pady=10, padx=5, sticky="e")
-        self.total_expense_label.grid(row=fl[-1].row + 1, column=1, pady=10, padx=5)
-        self.number_of_people_sharing_label.grid(row=fl[-1].row + 1, column=2, sticky="w", pady=10, padx=5)
+        button_reset_all.grid(row=fl[-1].row + 1, column=2, pady=10, padx=5, sticky="")
+        button_finalise = tk.Button(self.frame, text="Finalise", bd=1, command=self.finalise)
+        button_finalise.grid(row=fl[-1].row + 1, column=2, pady=10, padx=5, sticky="w")
+        button_setting = tk.Button(self.frame, text="Setting", bd=1)
+        button_setting.grid(row=fl[-1].row + 1, column=2, sticky="e", padx=10)
 
     def finalise(self):
+        try:
+            total = self.total_expense_cal()
+            self.average = round(total / self.number_of_people_participated, 1)
+        except ZeroDivisionError:
+            tk.messagebox.showinfo(title=None, message="Forgot to insert some value?")
+            return
+
         new_window = tk.Tk()
+        self.wid = new_window.winfo_id()
         new_window.geometry("600x450")
         new_window.title("Result")
 
-        total = self.total_expense_cal()
-        self.average = round(total / self.number_of_people_participated, 1)
         self.get_combobox_value()
         name_title_label = tk.Label(new_window, text="Name", font='Helvetica 13 underline')
         name_title_label.grid(row=0, column=0, sticky="w", padx=20)
@@ -153,7 +161,10 @@ class App:
         print("Total expenditure: " + str(total))
 
     def save_file(self):
-        print(self.window.winfo_id())
+        canvas = GetWindowRect(self.wid)
+        ig = ImageGrab.grab(canvas)
+        ig.save("result", format='png')
+        print(self.wid)
 
     def toggle_check_box(self, index):
         fl = self.friend_list
@@ -178,22 +189,21 @@ class App:
             fl = self.friend_list
             index = update_section.get('index')
             font_color = self.check_font_color(index)
-            fl[index].inner_label.configure(text="Current expense $" + str(fl[index].expense))
+            fl[index].inner_label.config(text="Current expense $" + str(fl[index].expense))
             fl[index].inner_label.config(fg=font_color)
             fl[index].outter_label.config(fg=font_color)
             fl[index].btn_add_label.config(fg=font_color)
             fl[index].btn_reset_label.config(fg=font_color)
             self.expense_entry.select_range(0, len(self.expense_entry.get()))
             t = self.total_expense_cal()
-            self.total_expense_label.configure(text="Total expense $" + str(t))
-            self.number_of_people_sharing_label.configure(text="People sharing " +
-                                                               str(self.number_of_people_participated))
+            self.total_expense_label.config(text="Expense $" + str(t))
+            self.number_of_people_sharing_label.config(text="People sharing " + str(self.number_of_people_participated))
         elif update_section.get('update_cmd') == "expense_label":
             fl = self.friend_list
             index = update_section.get('index')
-            fl[index].inner_label.configure(text="Current expense $" + str(fl[index].expense))
+            fl[index].inner_label.config(text="Current expense $"+str(fl[index].expense))
             t = self.total_expense_cal()
-            self.total_expense_label.configure(text="Total expense $" + str(t))
+            self.total_expense_label.config(text="Expense $ "+str(t))
             self.expense_entry.select_range(0, len(self.expense_entry.get()))
 
     def total_expense_cal(self):
@@ -202,6 +212,12 @@ class App:
             if i.check_box_value == 1:
                 x += i.expense
         return x
+
+    def check_input(self, value):
+        try:
+            float(value)
+        except ValueError:
+            tk.messagebox.showwarning(title=None, message="Insert numeric value only.")
 
     def get_combobox_value(self):
         self.group_expense_dict = {}
