@@ -1,1 +1,1 @@
-{"namelist": {"listA": ["Kelvin", "Handi", "Ivy", "J", "Terry", "Michelle", "Kenny", "Allen", "Grace"], "listB": ["bb", "cc", "dd", "ee"], "listC": ["OJ", "BJ", "Bob"]}, "row": 3, "col": 3, "on_use": "listB"}
+{"namelist": {"listA": ["Kelvin", "Handi", "Ivy", "J", "Terry", "Michelle", "Kenny", "Allen", "Grace"], "listB": ["Create your name list here.. follow the format above!"], "listC": ["OJ", "BJ", "Bob", "Tim", "Wing"], "GoodTeam": ["good"], "Jr": ["good"], "ggg": ["good"], "G2": ["G2", "g3"]}, "row": 3, "col": 3, "on_use": "listC"}

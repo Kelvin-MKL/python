@@ -36,12 +36,14 @@ class App(tk.Tk):
             self.row = self.json_data["row"]
             self.col = self.json_data["col"]
         print("json data imported successfully.")
-        print(self.json_data["namelist"], self.row, self.col, self.json_data, self.json_data['on_use'])
+        print(self.json_data)
 
     def create_friend_list_obj(self):
         initial_expense = 0
         i = 0
         l = self.json_data['on_use']
+        if len(self.json_data["namelist"][l]) <= 2:
+            self.json_data["namelist"][l] = ["example1", "example2", "examples3"]
         try:
             for r in range(self.row):
                 for c in range(self.col):
