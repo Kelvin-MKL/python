@@ -4,30 +4,31 @@ from friends import *
 from setting import *
 import json
 from screenshot import *
-import os
 
-class App:
-    def __init__(self, friend, config_file, sh_component):
-        self.window = tk.Tk()
-        self.window.title("Easy Split")
-        self.wid = ""
-        self.frame = tk.Frame(self.window)
+
+class App(tk.Tk):
+    def __init__(self, friend, config_file, sh_component, setting_component):
+        tk.Tk.__init__(self)
+        self.title("Easy Split")
+        self.frame = Frame(self)
         self.frame.pack()
         self.friend = friend  # Friend class
         self.config_file = config_file  # config json file
         self.json_data = None
         self.friend_list = []
+        self.wid = ""
         self.row = None  # will be set according to config file -> grid row
         self.col = None  # will be set according to config file -> grid col
-        self.expense_label = tk.Label(self.frame, text="$")
-        self.expense_entry = tk.Entry(self.frame)
-        self.total_expense_label = tk.Label(self.frame, text="Expense $0.0")
-        self.number_of_people_sharing_label = tk.Label(self.frame, text="People sharing 0")
+        self.expense_label = Label(self.frame, text="$")
+        self.expense_entry = Entry(self.frame)
+        self.total_expense_label = Label(self.frame, text="Expense $ 0.0")
+        self.number_of_people_sharing_label = Label(self.frame, text="People sharing 0")
         self.number_of_people_participated = 0
         self.combobox_value = ["a", "b", "c", "d", "e", "f"]
         self.group_expense_dict = {}
         self.average = 0
         self.sh_component = sh_component
+        self.setting_component = setting_component
 
     def load_json_file(self):
         with open(self.config_file) as f:
@@ -56,7 +57,7 @@ class App:
             font_color = self.check_font_color(index)
             fl[index].outter_label = tk.LabelFrame(self.frame, text=fl[index].name, fg=font_color)
             fl[index].outter_label.grid(row=fl[index].row, column=fl[index].col, padx=20, pady=20)
-            fl[index].inner_label = tk.Label(fl[index].outter_label, text="Current expense $" + str(fl[index].expense),
+            fl[index].inner_label = tk.Label(fl[index].outter_label, text="Current expense $ " + str(fl[index].expense),
                                              fg=font_color, width=18)
             fl[index].inner_label.grid(row=0, column=0, padx=20)
             fl[index].btn_add_label = tk.Button(fl[index].outter_label, text="Add", bd=1, fg=font_color,
@@ -80,44 +81,34 @@ class App:
             combo_box_label.grid(row=4, column=0, sticky="w", padx=10, pady=5)
             fl[index].group_label = ttk.Combobox(fl[index].outter_label, values=self.combobox_value, width=2)
             fl[index].group_label.grid(row=4, column=0)
-
         self.expense_label.grid(row=fl[-1].row + 1, column=0, sticky="w", padx=15, pady=10)
         self.expense_entry.grid(row=fl[-1].row + 1, column=0, padx=10, pady=10)
         self.expense_entry.select_range(0, 5)
         self.total_expense_label.grid(row=fl[-1].row + 1, column=1, pady=10, padx=5, sticky="w")
         self.number_of_people_sharing_label.grid(row=fl[-1].row + 1, column=1, sticky="e", pady=10, padx=5)
         button_reset_all = tk.Button(self.frame, text="Reset All", bd=1,
-                                     command=self.restart)
-                                     #lambda i=len(fl): [
-                                       # [self.update_ui(update_cmd="update_all", index=j) for j in range(i)]])
+                                     command=lambda i=len(fl): [[fl[x].reset() for x in range(i)],
+                                        [self.update_ui(update_cmd="update_all", index=j) for j in range(i)]])
         button_reset_all.grid(row=fl[-1].row + 1, column=2, pady=10, padx=5, sticky="")
         button_finalise = tk.Button(self.frame, text="Finalise", bd=1, command=self.finalise)
         button_finalise.grid(row=fl[-1].row + 1, column=2, pady=10, padx=5, sticky="w")
         button_setting = tk.Button(self.frame, text="Setting", bd=1, command=self.open_setting_window)
         button_setting.grid(row=fl[-1].row + 1, column=2, sticky="e", padx=10)
 
-
     def restart(self):
-
-        for i in self.frame.winfo_children():
+        for i in self.winfo_children():
             i.destroy()
-
-        self.window.destroy()
-        self.window = tk.Tk()
         self.json_data = None
         self.friend_list = []
         self.load_json_file()
         self.create_friend_list_obj()
-        self.frame = tk.Frame(self.window)
-
-        self.expense_label = tk.Label(self.frame, text="$")
-        self.expense_entry = tk.Entry(self.frame)
-        self.total_expense_label = tk.Label(self.frame, text="Expense $0.0")
-        self.number_of_people_sharing_label = tk.Label(self.frame, text="People sharing 0")
+        self.frame = Frame(self)
+        self.expense_label = Label(self.frame, text="$")
+        self.expense_entry = Entry(self.frame)
+        self.total_expense_label = Label(self.frame, text="Expense $ 0.0")
+        self.number_of_people_sharing_label = Label(self.frame, text="People sharing 0")
         self.create_form()
         self.frame.pack()
-        print("aa")
-
 
     def finalise(self):
         try:
@@ -128,10 +119,9 @@ class App:
             return
 
         new_window = tk.Tk()
-        self.wid = new_window.winfo_id()
         new_window.geometry("600x450")
         new_window.title("Result")
-
+        self.wid = new_window.winfo_id()
         self.get_combobox_value()
         name_title_label = tk.Label(new_window, text="Name", font='Helvetica 13 underline')
         name_title_label.grid(row=0, column=0, sticky="w", padx=20)
@@ -187,15 +177,15 @@ class App:
 
     def save_file(self):
         # self.wid will be set when finalise button is pressed.
-        self.window.withdraw()
+        self.withdraw()
         file_path = filedialog.askdirectory(title="Where do you want to save the file?")
         if not file_path:
-            self.window.iconify()
+            self.iconify()
             print("Nothing has be saved.")
         else:
             new_screenshot = self.sh_component(self.wid, file_path)
             new_screenshot.save()
-            self.window.iconify()
+            self.iconify()
             print("Result has been saved to " + file_path)
 
     def toggle_check_box(self, index):
@@ -211,29 +201,29 @@ class App:
     def check_font_color(self, index):
         fl = self.friend_list
         if fl[index].check_box_value == 0:
-            font = fl[index].disable_font_color
+            font_c = fl[index].disable_font_color
         else:
-            font = fl[index].active_font_color
-        return font
+            font_c = fl[index].active_font_color
+        return font_c
 
     def update_ui(self, **update_section):
         if update_section.get('update_cmd') == "update_all":
             fl = self.friend_list
             index = update_section.get('index')
             font_color = self.check_font_color(index)
-            fl[index].inner_label.config(text="Current expense $" + str(fl[index].expense))
+            fl[index].inner_label.config(text="Current expense $ " + str(fl[index].expense))
             fl[index].inner_label.config(fg=font_color)
             fl[index].outter_label.config(fg=font_color)
             fl[index].btn_add_label.config(fg=font_color)
             fl[index].btn_reset_label.config(fg=font_color)
             self.expense_entry.select_range(0, len(self.expense_entry.get()))
             t = self.total_expense_cal()
-            self.total_expense_label.config(text="Expense $" + str(t))
+            self.total_expense_label.config(text="Expense $ " + str(t))
             self.number_of_people_sharing_label.config(text="People sharing " + str(self.number_of_people_participated))
         elif update_section.get('update_cmd') == "expense_label":
             fl = self.friend_list
             index = update_section.get('index')
-            fl[index].inner_label.config(text="Current expense $"+str(fl[index].expense))
+            fl[index].inner_label.config(text="Current expense $ "+str(fl[index].expense))
             t = self.total_expense_cal()
             self.total_expense_label.config(text="Expense $ "+str(t))
             self.expense_entry.select_range(0, len(self.expense_entry.get()))
@@ -252,12 +242,9 @@ class App:
             tk.messagebox.showwarning(title=None, message="Insert numeric value only.")
 
     def open_setting_window(self):
-        sw = Setting(self.config_file)
-        sw.show_ui()
-        a = sw.send_wid()
-        print(a)
-
-
+        n = self.setting_component(self.config_file)  # class tk.Toplevel will pause from here
+        self.restart()
+        print("The app has been reset as in new friend list")
 
     def get_combobox_value(self):
         self.group_expense_dict = {}
@@ -280,10 +267,10 @@ class App:
 
 
 if __name__ == '__main__':
-    new_app = App(Friend, 'config.json', Screenshot)
+    new_app = App(Friend, 'config.json', Screenshot, Setting)
     new_app.load_json_file()
     new_app.create_friend_list_obj()
     new_app.create_form()
-    new_app.window.mainloop()
+    new_app.mainloop()
 
 
