@@ -12,7 +12,12 @@ def on_complete(stream, file_path):
 
 
 ps.theme('DarkAmber')
-start_layout = [[ps.Input(key='-INPUT-'), ps.Button('Submit')]]
+
+
+input_tab = [
+    [ps.Input(key='-INPUT-'), ps.Button('Submit')],
+    [ps.Button('Clear', key='-Clear-')]
+]
 
 info_tab = [
     [ps.Text('Title:'), ps.Text('', key='-TITLE-')],
@@ -38,22 +43,26 @@ download_tab = [
         [[ps.FolderBrowse(key= '-FOLDER-'), ps.Input(key='-FILE-')]])],
     [ps.VPush()],
     [ps.ProgressBar(100, size = (20, 20), expand_x = True, key = '-PROGRESSBAR-')]
+
 ]
 
 layout = [[ps.TabGroup([[
-    ps.Tab('info', info_tab), ps.Tab('Download', download_tab)
+    ps.Tab('input', input_tab),ps.Tab('info', info_tab), ps.Tab('Download', download_tab)
 ]])]]
 
-window = ps.Window('Youtube Video Downloader', start_layout)  # The title of the window
+
+window = ps.Window('Youtube Video Downloader', layout)
+#window = ps.Window('Youtube Video Downloader', start_layout)  # The title of the window
 download_path = str
 while True:
     event, values = window.read()
+
     if event == ps.WINDOW_CLOSED:
         break
     if event == 'Submit':
         video_object = YouTube(values['-INPUT-'], on_progress_callback= progress_check, on_complete_callback= on_complete)    # fetching data from the link
-        window.close()
-        window = ps.Window('Youtube Downloader', layout, finalize = True)
+        #window.close()
+        #window = ps.Window('Youtube Downloader', layout, finalize = True)
 
         # update video
         window['-TITLE-'].update(video_object.title)
@@ -72,6 +81,7 @@ while True:
     if event == '-BEST-':
         download_path = values['-FILE-']
         video_object.streams.get_highest_resolution().download(output_path=download_path)
+
     if event == '-WORST-':
         download_path = values['-FILE-']
         video_object.streams.get_lowest_resolution().download(output_path=download_path)
@@ -79,7 +89,8 @@ while True:
 
         download_path = values['-FILE-']
         video_object.streams.get_audio_only().download(output_path=download_path)
-
+    if event == '-Clear-':
+        window['-INPUT-'].update('')
 
 
 window.close()
